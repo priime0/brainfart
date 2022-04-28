@@ -38,7 +38,7 @@ impl ProgState {
     /// Run a single command, assuming that the ProgState is not finished
     pub fn run(&mut self) {
         let curr_command: &Token = &self.commands[self.command_index];
-        match curr_command.r#type {
+        match curr_command.ty {
             TokenType::PointInc => self.run_point_inc(),
             TokenType::PointDec => self.run_point_dec(),
             TokenType::ValInc => self.run_val_inc(),
@@ -120,13 +120,13 @@ impl ProgState {
     fn run_if_zero(&mut self) {
         let val: u32 = self.data[self.data_index];
         if val == 0 {
-            let mut curr: &TokenType = &self.commands[self.command_index].r#type;
+            let mut curr: &TokenType = &self.commands[self.command_index].ty;
             while curr != &TokenType::IfNonZero {
                 self.command_index += 1;
                 if self.command_index == self.commands.len() {
                     panic!("Could not find closing IfNonZero token \"]\"");
                 }
-                curr = &self.commands[self.command_index].r#type;
+                curr = &self.commands[self.command_index].ty;
             }
             self.command_index += 1;
         }
@@ -164,12 +164,12 @@ mod tests {
         let result: ProgState = ProgState::from_tokens(tokens);
         matches!(result.commands.as_slice(), &[
             Token {
-                r#type: TokenType::PointInc,
+                ty: TokenType::PointInc,
                 line: 1,
                 col: 1
             },
             Token {
-                r#type: TokenType::ValInc,
+                ty: TokenType::ValInc,
                 line: 1,
                 col: 2
             }

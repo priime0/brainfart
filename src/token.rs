@@ -25,16 +25,16 @@ pub enum TokenType {
 /// A Token stores a TokenType and where it was encountered in the source file
 #[derive(Debug, PartialEq, Eq)]
 pub struct Token {
-    pub r#type: TokenType,
+    pub ty: TokenType,
     pub line: u32,
     pub col: u32,
 }
 
 impl Token {
     /// Produce a Token from the given arguments
-    pub fn from(r#type: TokenType, line: u32, col: u32) -> Self {
+    pub fn from(ty: TokenType, line: u32, col: u32) -> Self {
         Token {
-            r#type,
+            ty,
             line,
             col
         }

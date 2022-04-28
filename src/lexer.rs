@@ -68,7 +68,7 @@ mod tests {
     fn lex_string_char() {
         matches!(lex_string("+".to_string()).as_slice(), &[
             Token {
-                r#type: TokenType::ValInc,
+                ty: TokenType::ValInc,
                 line: 1,
                 col: 1
             }
@@ -79,7 +79,7 @@ mod tests {
     fn lex_string_char_whitespace() {
         matches!(lex_string("  >\n ".to_string()).as_slice(), &[
             Token {
-                r#type: TokenType::PointInc,
+                ty: TokenType::PointInc,
                 line: 1,
                 col: 3
             }
@@ -90,27 +90,27 @@ mod tests {
     fn lex_string_chars_whitespace() {
         matches!(lex_string("> ++ <\n-  ".to_string()).as_slice(), &[
             Token {
-                r#type: TokenType::PointInc,
+                ty: TokenType::PointInc,
                 line: 1,
                 col: 1,
             },
             Token {
-                r#type: TokenType::ValInc,
+                ty: TokenType::ValInc,
                 line: 1,
                 col: 3
             },
             Token {
-                r#type: TokenType::ValInc,
+                ty: TokenType::ValInc,
                 line: 1,
                 col: 4
             },
             Token {
-                r#type: TokenType::PointDec,
+                ty: TokenType::PointDec,
                 line: 1,
                 col: 6
             },
             Token {
-                r#type: TokenType::ValDec,
+                ty: TokenType::ValDec,
                 line: 2,
                 col: 1
             },
@@ -121,27 +121,27 @@ mod tests {
     fn lex_string_char_words() {
         matches!(lex_string("Observe the following:\n ,+++.".to_string()).as_slice(), &[
             Token {
-                r#type: TokenType::Input,
+                ty: TokenType::Input,
                 line: 2,
                 col: 2,
             },
             Token {
-                r#type: TokenType::ValInc,
+                ty: TokenType::ValInc,
                 line: 2,
                 col: 3,
             },
             Token {
-                r#type: TokenType::ValInc,
+                ty: TokenType::ValInc,
                 line: 2,
                 col: 4,
             },
             Token {
-                r#type: TokenType::ValInc,
+                ty: TokenType::ValInc,
                 line: 2,
                 col: 4,
             },
             Token {
-                r#type: TokenType::Output,
+                ty: TokenType::Output,
                 line: 2,
                 col: 5,
             },
