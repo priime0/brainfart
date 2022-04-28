@@ -1,0 +1,11 @@
+[package]
+name = "brainfart"
+description = "A brainfuck interpreter"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+
+[[bin]]
+name = "bft"
+path = "src/main.rs"
