@@ -66,7 +66,6 @@ impl ProgState {
     /// Run the pointer decrement command on this ProgState
     fn run_point_dec(&mut self) {
         if self.data_index == 0 {
-            println!("{:?}", self.data);
             panic!("Attempted to decrement pointer that is at index 0");
         }
 
@@ -93,7 +92,6 @@ impl ProgState {
     /// Run the data output command on this ProgState
     fn run_output(&mut self) {
         let val: u32 = self.data[self.data_index];
-        //println!("{}", val);
         match char::from_u32(val) {
             Some(c) => print!("{}", c),
             None => print!(" ")
