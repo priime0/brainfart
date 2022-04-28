@@ -107,12 +107,12 @@ impl ProgState {
             .read_line(&mut input)
             .expect("Failed to read input");
         
-        let val: u32 = match input.trim().parse::<u32>() {
+        let val: char = match input.trim().parse::<char>() {
             Ok(i) => i,
-            Err(_) => panic!("Failed to read number from input")
+            Err(_) => panic!("Failed to read character from input")
         };
 
-        self.data[self.data_index] = val;
+        self.data[self.data_index] = val as u32;
         self.command_index += 1;
     }
 
