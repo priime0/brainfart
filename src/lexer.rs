@@ -6,10 +6,23 @@ pub fn lex_string(string: String) -> Vec<Token> {
     let mut line: u32 = 1;
     let mut col: u32 = 1;
     let mut tokens: Vec<Token> = vec!();
+    let mut brace_balance: u32 = 0;
     for char in string.chars() {
         let opt_token_type: Option<TokenType> = lex_char(char);
         if let Some(token_type) = opt_token_type {
-            let token: Token = Token::from(token_type, line.clone(), col.clone());
+            match token_type {
+                TokenType::IfZero => {
+                    brace_balance += 1;
+                },
+                TokenType::IfNonZero => {
+                    if brace_balance == 0 {
+                        panic!("Encountered non-matched closing brace ] at line {} col {}", line, col);
+                    }
+                    brace_balance -= 1;
+                },
+                _ => (),
+            }
+            let token: Token = Token::from(token_type, line, col);
             tokens.push(token);
             col += 1;
         }
@@ -21,6 +34,11 @@ pub fn lex_string(string: String) -> Vec<Token> {
             col += 1;
         }
     }
+
+    if brace_balance != 0 {
+        panic!("Missing matching closing brace ]");
+    }
+
     tokens
 }
 
