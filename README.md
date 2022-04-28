@@ -8,3 +8,8 @@ Run `cargo build` to build the binary. The binary will be available at
 install --path .`.
 
 You can also view annotated examples to run in the `examples/` directory.
+
+```
+$ bft hello.bf
+Hello World!
+```
