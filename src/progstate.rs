@@ -82,7 +82,7 @@ impl ProgState {
     /// Run the data decrement command on this ProgState
     fn run_val_dec(&mut self) {
         if self.data[self.data_index] == 0 {
-            panic!("Attempted to decrement pointer that is at index 0");
+            panic!("Attempted to decrement value that is 0");
         }
 
         self.data[self.data_index] -= 1;
