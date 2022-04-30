@@ -1,12 +1,12 @@
-use std::fs;
 use std::env;
+use std::fs;
 
-mod token;
 mod lexer;
 mod progstate;
+mod token;
 
-use crate::token::Token;
 use crate::progstate::ProgState;
+use crate::token::Token;
 
 fn main() {
     let filenames: Vec<String> = env::args().skip(1).collect();

@@ -1,23 +1,21 @@
-use crate::token::TokenType;
 use crate::token::Token;
+use crate::token::TokenType;
 
 /// Converts a String into a vector of Tokens, ignoring invalid characters
 pub fn lex_string(string: String) -> Vec<Token> {
     let mut line: u32 = 1;
     let mut col: u32 = 1;
-    let mut tokens: Vec<Token> = vec!();
+    let mut tokens: Vec<Token> = vec![];
     let mut brace_balance: u32 = 0;
     for char in string.chars() {
         let opt_token_type: Option<TokenType> = lex_char(char);
         if let Some(token_type) = opt_token_type {
             add_token(&mut tokens, token_type, &mut brace_balance, line, col);
             col += 1;
-        }
-        else if char == '\n' || char == '\r' {
+        } else if char == '\n' || char == '\r' {
             line += 1;
             col = 1;
-        }
-        else {
+        } else {
             col += 1;
         }
     }
@@ -30,17 +28,26 @@ pub fn lex_string(string: String) -> Vec<Token> {
 }
 
 /// Adds a token to the tokens vector
-fn add_token(tokens: &mut Vec<Token>, token_type: TokenType, brace_balance: &mut u32, line: u32, col: u32) {
+fn add_token(
+    tokens: &mut Vec<Token>,
+    token_type: TokenType,
+    brace_balance: &mut u32,
+    line: u32,
+    col: u32,
+) {
     match token_type {
         TokenType::IfZero => {
             *brace_balance += 1;
-        },
+        }
         TokenType::IfNonZero => {
             if *brace_balance == 0 {
-                panic!("Encountered non-matched closing brace ] at line {} col {}", line, col);
+                panic!(
+                    "Encountered non-matched closing brace ] at line {} col {}",
+                    line, col
+                );
             }
             *brace_balance -= 1;
-        },
+        }
         _ => (),
     }
     let token: Token = Token::from(token_type, line, col);
@@ -64,93 +71,101 @@ fn lex_char(c: char) -> Option<TokenType> {
 
 #[cfg(test)]
 mod tests {
-    use crate::token::TokenType;
-    use crate::token::Token;
     use crate::lexer::lex_char;
     use crate::lexer::lex_string;
+    use crate::token::Token;
+    use crate::token::TokenType;
 
     #[test]
     fn lex_string_char() {
-        matches!(lex_string("+".to_string()).as_slice(), &[
-            Token {
+        matches!(
+            lex_string("+".to_string()).as_slice(),
+            &[Token {
                 ty: TokenType::ValInc,
                 line: 1,
                 col: 1
-            }
-        ]);
+            }]
+        );
     }
 
     #[test]
     fn lex_string_char_whitespace() {
-        matches!(lex_string("  >\n ".to_string()).as_slice(), &[
-            Token {
+        matches!(
+            lex_string("  >\n ".to_string()).as_slice(),
+            &[Token {
                 ty: TokenType::PointInc,
                 line: 1,
                 col: 3
-            }
-        ]);
+            }]
+        );
     }
 
     #[test]
     fn lex_string_chars_whitespace() {
-        matches!(lex_string("> ++ <\n-  ".to_string()).as_slice(), &[
-            Token {
-                ty: TokenType::PointInc,
-                line: 1,
-                col: 1,
-            },
-            Token {
-                ty: TokenType::ValInc,
-                line: 1,
-                col: 3
-            },
-            Token {
-                ty: TokenType::ValInc,
-                line: 1,
-                col: 4
-            },
-            Token {
-                ty: TokenType::PointDec,
-                line: 1,
-                col: 6
-            },
-            Token {
-                ty: TokenType::ValDec,
-                line: 2,
-                col: 1
-            },
-        ]);
+        matches!(
+            lex_string("> ++ <\n-  ".to_string()).as_slice(),
+            &[
+                Token {
+                    ty: TokenType::PointInc,
+                    line: 1,
+                    col: 1,
+                },
+                Token {
+                    ty: TokenType::ValInc,
+                    line: 1,
+                    col: 3
+                },
+                Token {
+                    ty: TokenType::ValInc,
+                    line: 1,
+                    col: 4
+                },
+                Token {
+                    ty: TokenType::PointDec,
+                    line: 1,
+                    col: 6
+                },
+                Token {
+                    ty: TokenType::ValDec,
+                    line: 2,
+                    col: 1
+                },
+            ]
+        );
     }
 
     #[test]
     fn lex_string_char_words() {
-        matches!(lex_string("Observe the following:\n ,+++.".to_string()).as_slice(), &[
-            Token {
-                ty: TokenType::Input,
-                line: 2,
-                col: 2,
-            },
-            Token {
-                ty: TokenType::ValInc,
-                line: 2,
-                col: 3,
-            },
-            Token {
-                ty: TokenType::ValInc,
-                line: 2,
-                col: 4,
-            },
-            Token {
-                ty: TokenType::ValInc,
-                line: 2,
-                col: 4,
-            },
-            Token {
-                ty: TokenType::Output,
-                line: 2,
-                col: 5,
-            },
-        ]);
+        matches!(
+            lex_string("Observe the following:\n ,+++.".to_string()).as_slice(),
+            &[
+                Token {
+                    ty: TokenType::Input,
+                    line: 2,
+                    col: 2,
+                },
+                Token {
+                    ty: TokenType::ValInc,
+                    line: 2,
+                    col: 3,
+                },
+                Token {
+                    ty: TokenType::ValInc,
+                    line: 2,
+                    col: 4,
+                },
+                Token {
+                    ty: TokenType::ValInc,
+                    line: 2,
+                    col: 4,
+                },
+                Token {
+                    ty: TokenType::Output,
+                    line: 2,
+                    col: 5,
+                },
+            ]
+        );
     }
 
     #[test]

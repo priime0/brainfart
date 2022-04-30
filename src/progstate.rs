@@ -1,5 +1,5 @@
-use crate::token::TokenType;
 use crate::token::Token;
+use crate::token::TokenType;
 
 use std::io;
 
@@ -12,21 +12,21 @@ pub struct ProgState {
     data: Vec<u32>,
     command_index: usize,
     data_index: usize,
-    loop_stack: Vec<usize>
+    loop_stack: Vec<usize>,
 }
 
 impl ProgState {
     /// Given a vector of tokens, create a default ProgState with no data, default indices, and an
     /// empty loop stack.
     pub fn from_tokens(tokens: Vec<Token>) -> ProgState {
-        let mut data_vec: Vec<u32> = vec!(0);
+        let mut data_vec: Vec<u32> = vec![0];
         data_vec.resize(data_vec.capacity(), 0);
         ProgState {
             commands: tokens,
             data: data_vec,
             command_index: 0,
             data_index: 0,
-            loop_stack: vec!()
+            loop_stack: vec![],
         }
     }
 
@@ -94,7 +94,7 @@ impl ProgState {
         let val: u32 = self.data[self.data_index];
         match char::from_u32(val) {
             Some(c) => print!("{}", c),
-            None => print!(" ")
+            None => print!(" "),
         }
 
         self.command_index += 1;
@@ -106,10 +106,10 @@ impl ProgState {
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read input");
-        
+
         let val: char = match input.trim().parse::<char>() {
             Ok(i) => i,
-            Err(_) => panic!("Failed to read character from input")
+            Err(_) => panic!("Failed to read character from input"),
         };
 
         self.data[self.data_index] = val as u32;
@@ -129,8 +129,7 @@ impl ProgState {
                 curr = &self.commands[self.command_index].ty;
             }
             self.command_index += 1;
-        }
-        else {
+        } else {
             self.loop_stack.push(self.command_index);
             self.command_index += 1;
         }
@@ -141,8 +140,7 @@ impl ProgState {
         let val: u32 = self.data[self.data_index];
         if val != 0 {
             self.command_index = self.loop_stack.pop().unwrap();
-        }
-        else {
+        } else {
             self.loop_stack.pop();
             self.command_index += 1;
         }
@@ -152,28 +150,31 @@ impl ProgState {
 #[cfg(test)]
 mod tests {
     use crate::progstate::ProgState;
-    use crate::token::TokenType;
     use crate::token::Token;
+    use crate::token::TokenType;
 
     #[test]
     fn progstate_from() {
         let tokens: Vec<Token> = vec![
             Token::from(TokenType::PointInc, 1, 1),
-            Token::from(TokenType::ValInc, 1, 2)
+            Token::from(TokenType::ValInc, 1, 2),
         ];
         let result: ProgState = ProgState::from_tokens(tokens);
-        matches!(result.commands.as_slice(), &[
-            Token {
-                ty: TokenType::PointInc,
-                line: 1,
-                col: 1
-            },
-            Token {
-                ty: TokenType::ValInc,
-                line: 1,
-                col: 2
-            }
-        ]);
+        matches!(
+            result.commands.as_slice(),
+            &[
+                Token {
+                    ty: TokenType::PointInc,
+                    line: 1,
+                    col: 1
+                },
+                Token {
+                    ty: TokenType::ValInc,
+                    line: 1,
+                    col: 2
+                }
+            ]
+        );
         matches!(result.data.as_slice(), &[0]);
         matches!(result.command_index, 0);
         matches!(result.data_index, 0);

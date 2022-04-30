@@ -19,7 +19,7 @@ pub enum TokenType {
     IfZero,
     /// A Token that closes the "while not zero" loop at the pointer location, jumping to its
     /// corresponding IfZero token if the pointer location's value is zero
-    IfNonZero
+    IfNonZero,
 }
 
 /// A Token stores a TokenType and where it was encountered in the source file
@@ -33,10 +33,6 @@ pub struct Token {
 impl Token {
     /// Produce a Token from the given arguments
     pub fn from(ty: TokenType, line: u32, col: u32) -> Self {
-        Token {
-            ty,
-            line,
-            col
-        }
+        Token { ty, line, col }
     }
 }
