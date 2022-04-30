@@ -10,20 +10,7 @@ pub fn lex_string(string: String) -> Vec<Token> {
     for char in string.chars() {
         let opt_token_type: Option<TokenType> = lex_char(char);
         if let Some(token_type) = opt_token_type {
-            match token_type {
-                TokenType::IfZero => {
-                    brace_balance += 1;
-                },
-                TokenType::IfNonZero => {
-                    if brace_balance == 0 {
-                        panic!("Encountered non-matched closing brace ] at line {} col {}", line, col);
-                    }
-                    brace_balance -= 1;
-                },
-                _ => (),
-            }
-            let token: Token = Token::from(token_type, line, col);
-            tokens.push(token);
+            add_token(&mut tokens, token_type, &mut brace_balance, line, col);
             col += 1;
         }
         else if char == '\n' || char == '\r' {
@@ -40,6 +27,24 @@ pub fn lex_string(string: String) -> Vec<Token> {
     }
 
     tokens
+}
+
+/// Adds a token to the tokens vector
+fn add_token(tokens: &mut Vec<Token>, token_type: TokenType, brace_balance: &mut u32, line: u32, col: u32) {
+    match token_type {
+        TokenType::IfZero => {
+            *brace_balance += 1;
+        },
+        TokenType::IfNonZero => {
+            if *brace_balance == 0 {
+                panic!("Encountered non-matched closing brace ] at line {} col {}", line, col);
+            }
+            *brace_balance -= 1;
+        },
+        _ => (),
+    }
+    let token: Token = Token::from(token_type, line, col);
+    tokens.push(token);
 }
 
 /// Converts a character to a token type, if valid
