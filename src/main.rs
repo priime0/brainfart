@@ -2,22 +2,22 @@ use std::env;
 use std::fs;
 use std::process::exit;
 
+mod error;
 mod lexer;
 mod progstate;
 mod token;
-mod error;
 
+use crate::error::BrainfartResult;
 use crate::progstate::ProgState;
 use crate::token::Token;
-use crate::error::BrainfartResult;
 
-fn main(){
+fn main() {
     let filenames: Vec<String> = env::args().skip(1).collect();
     for filename in filenames {
         let result: BrainfartResult<()> = run_file(filename);
         match result {
             Ok(_) => (),
-            Err(e) => { 
+            Err(e) => {
                 eprintln!("{}", e);
                 exit(1);
             }
@@ -39,10 +39,10 @@ fn run_file(filename: String) -> BrainfartResult<()> {
                 }
             }
             Ok(())
-        },
+        }
         Err(e) => {
             eprintln!("lex error");
             Err(e)
-        },
+        }
     }
 }

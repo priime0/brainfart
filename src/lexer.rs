@@ -1,7 +1,7 @@
-use crate::token::Token;
-use crate::token::TokenType;
 use crate::error::BrainfartError;
 use crate::error::BrainfartResult;
+use crate::token::Token;
+use crate::token::TokenType;
 
 /// Converts a String into a vector of Tokens, ignoring invalid characters
 pub fn lex_string(string: String) -> BrainfartResult<Vec<Token>> {
@@ -27,7 +27,7 @@ pub fn lex_string(string: String) -> BrainfartResult<Vec<Token>> {
 
     match brace_balance {
         0 => Ok(tokens),
-        _ => Err(BrainfartError::UnmatchedOpenBracket)
+        _ => Err(BrainfartError::UnmatchedOpenBracket),
     }
 }
 
@@ -140,7 +140,9 @@ mod tests {
     #[test]
     fn lex_string_char_words() {
         matches!(
-            lex_string("Observe the following:\n ,+++.".to_string()).unwrap().as_slice(),
+            lex_string("Observe the following:\n ,+++.".to_string())
+                .unwrap()
+                .as_slice(),
             &[
                 Token {
                     ty: TokenType::Input,

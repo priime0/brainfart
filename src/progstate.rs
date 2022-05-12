@@ -1,7 +1,7 @@
-use crate::token::Token;
-use crate::token::TokenType;
 use crate::error::BrainfartError;
 use crate::error::BrainfartResult;
+use crate::token::Token;
+use crate::token::TokenType;
 
 use std::io;
 
@@ -126,7 +126,7 @@ impl ProgState {
             Err(_) => {
                 let token: Token = self.commands[self.command_index];
                 return Err(BrainfartError::Io(token));
-            },
+            }
         };
 
         self.data[self.data_index] = val as u32;

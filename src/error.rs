@@ -69,7 +69,7 @@ mod tests {
             Err(e) => matches!(
                 format!("{}", e).as_str(),
                 "ERROR: Missing matching closing bracket"
-            )
+            ),
         };
     }
 
@@ -95,7 +95,7 @@ mod tests {
         let token: Token = Token {
             ty: TokenType::PointDec,
             line: 3,
-            col: 3
+            col: 3,
         };
         let err: BrainfartResult<()> = Err(BrainfartError::PointZeroDec(token));
         match err {
@@ -112,7 +112,7 @@ mod tests {
         let token: Token = Token {
             ty: TokenType::ValDec,
             line: 2,
-            col: 8
+            col: 8,
         };
         let err: BrainfartResult<()> = Err(BrainfartError::ValZeroDec(token));
         match err {
@@ -129,7 +129,7 @@ mod tests {
         let token: Token = Token {
             ty: TokenType::Input,
             line: 1,
-            col: 2
+            col: 2,
         };
         let err: BrainfartResult<()> = Err(BrainfartError::Io(token));
         match err {
@@ -137,7 +137,7 @@ mod tests {
             Err(e) => matches!(
                 format!("{}", e).as_str(),
                 "ERROR line {} col {}: Failed to read character from input"
-            )
+            ),
         };
     }
 }
