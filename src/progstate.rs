@@ -1,5 +1,7 @@
 use crate::token::Token;
 use crate::token::TokenType;
+use crate::error::BrainfartError;
+use crate::error::BrainfartResult;
 
 use std::io;
 
@@ -36,7 +38,7 @@ impl ProgState {
     }
 
     /// Run a single command, assuming that the ProgState is not finished
-    pub fn run(&mut self) {
+    pub fn run(&mut self) -> BrainfartResult<()> {
         let curr_command: &Token = &self.commands[self.command_index];
         match curr_command.ty {
             TokenType::PointInc => self.run_point_inc(),
@@ -51,7 +53,7 @@ impl ProgState {
     }
 
     /// Run the pointer increment command on this ProgState
-    fn run_point_inc(&mut self) {
+    fn run_point_inc(&mut self) -> BrainfartResult<()> {
         self.data_index += 1;
         self.command_index += 1;
 
@@ -61,36 +63,46 @@ impl ProgState {
             self.data.reserve(add_space);
             self.data.resize(self.data.capacity(), 0);
         }
+
+        Ok(())
     }
 
     /// Run the pointer decrement command on this ProgState
-    fn run_point_dec(&mut self) {
+    fn run_point_dec(&mut self) -> BrainfartResult<()> {
         if self.data_index == 0 {
-            panic!("Attempted to decrement pointer that is at index 0");
+            let token: Token = self.commands[self.command_index];
+            return Err(BrainfartError::PointZeroDec(token));
         }
 
         self.data_index -= 1;
         self.command_index += 1;
+
+        Ok(())
     }
 
     /// Run the data increment command on this ProgState
-    fn run_val_inc(&mut self) {
+    fn run_val_inc(&mut self) -> BrainfartResult<()> {
         self.data[self.data_index] += 1;
         self.command_index += 1;
+
+        Ok(())
     }
 
     /// Run the data decrement command on this ProgState
-    fn run_val_dec(&mut self) {
+    fn run_val_dec(&mut self) -> BrainfartResult<()> {
         if self.data[self.data_index] == 0 {
-            panic!("Attempted to decrement value that is 0");
+            let token: Token = self.commands[self.command_index];
+            return Err(BrainfartError::ValZeroDec(token));
         }
 
         self.data[self.data_index] -= 1;
         self.command_index += 1;
+
+        Ok(())
     }
 
     /// Run the data output command on this ProgState
-    fn run_output(&mut self) {
+    fn run_output(&mut self) -> BrainfartResult<()> {
         let val: u32 = self.data[self.data_index];
         match char::from_u32(val) {
             Some(c) => print!("{}", c),
@@ -98,10 +110,12 @@ impl ProgState {
         }
 
         self.command_index += 1;
+
+        Ok(())
     }
 
     /// Run the data input command on this ProgState
-    fn run_input(&mut self) {
+    fn run_input(&mut self) -> BrainfartResult<()> {
         let mut input: String = String::new();
         io::stdin()
             .read_line(&mut input)
@@ -109,22 +123,27 @@ impl ProgState {
 
         let val: char = match input.trim().parse::<char>() {
             Ok(i) => i,
-            Err(_) => panic!("Failed to read character from input"),
+            Err(_) => {
+                let token: Token = self.commands[self.command_index];
+                return Err(BrainfartError::Io(token));
+            },
         };
 
         self.data[self.data_index] = val as u32;
         self.command_index += 1;
+
+        Ok(())
     }
 
     /// Run the if zero command on this ProgState
-    fn run_if_zero(&mut self) {
+    fn run_if_zero(&mut self) -> BrainfartResult<()> {
         let val: u32 = self.data[self.data_index];
         if val == 0 {
             let mut curr: &TokenType = &self.commands[self.command_index].ty;
             while curr != &TokenType::IfNonZero {
                 self.command_index += 1;
                 if self.command_index == self.commands.len() {
-                    panic!("Could not find closing IfNonZero token \"]\"");
+                    return Err(BrainfartError::UnmatchedOpenBracket);
                 }
                 curr = &self.commands[self.command_index].ty;
             }
@@ -133,10 +152,12 @@ impl ProgState {
             self.loop_stack.push(self.command_index);
             self.command_index += 1;
         }
+
+        Ok(())
     }
 
     /// Run the if non zero command on this ProgState
-    fn run_if_non_zero(&mut self) {
+    fn run_if_non_zero(&mut self) -> BrainfartResult<()> {
         let val: u32 = self.data[self.data_index];
         if val != 0 {
             self.command_index = self.loop_stack.pop().unwrap();
@@ -144,6 +165,8 @@ impl ProgState {
             self.loop_stack.pop();
             self.command_index += 1;
         }
+
+        Ok(())
     }
 }
 

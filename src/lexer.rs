@@ -1,8 +1,10 @@
 use crate::token::Token;
 use crate::token::TokenType;
+use crate::error::BrainfartError;
+use crate::error::BrainfartResult;
 
 /// Converts a String into a vector of Tokens, ignoring invalid characters
-pub fn lex_string(string: String) -> Vec<Token> {
+pub fn lex_string(string: String) -> BrainfartResult<Vec<Token>> {
     let mut line: u32 = 1;
     let mut col: u32 = 1;
     let mut tokens: Vec<Token> = vec![];
@@ -10,7 +12,10 @@ pub fn lex_string(string: String) -> Vec<Token> {
     for char in string.chars() {
         let opt_token_type: Option<TokenType> = lex_char(char);
         if let Some(token_type) = opt_token_type {
-            add_token(&mut tokens, token_type, &mut brace_balance, line, col);
+            let token_result = add_token(&mut tokens, token_type, &mut brace_balance, line, col);
+            if let Err(e) = token_result {
+                return Err(e);
+            }
             col += 1;
         } else if char == '\n' || char == '\r' {
             line += 1;
@@ -20,11 +25,10 @@ pub fn lex_string(string: String) -> Vec<Token> {
         }
     }
 
-    if brace_balance != 0 {
-        panic!("Missing matching closing brace ]");
+    match brace_balance {
+        0 => Ok(tokens),
+        _ => Err(BrainfartError::UnmatchedOpenBracket)
     }
-
-    tokens
 }
 
 /// Adds a token to the tokens vector
@@ -34,17 +38,15 @@ fn add_token(
     brace_balance: &mut u32,
     line: u32,
     col: u32,
-) {
+) -> BrainfartResult<()> {
     match token_type {
         TokenType::IfZero => {
             *brace_balance += 1;
         }
         TokenType::IfNonZero => {
             if *brace_balance == 0 {
-                panic!(
-                    "Encountered non-matched closing brace ] at line {} col {}",
-                    line, col
-                );
+                let token: Token = Token::from(token_type, line, col);
+                return Err(BrainfartError::UnmatchedCloseBracket(token));
             }
             *brace_balance -= 1;
         }
@@ -52,6 +54,7 @@ fn add_token(
     }
     let token: Token = Token::from(token_type, line, col);
     tokens.push(token);
+    Ok(())
 }
 
 /// Converts a character to a token type, if valid
@@ -79,7 +82,7 @@ mod tests {
     #[test]
     fn lex_string_char() {
         matches!(
-            lex_string("+".to_string()).as_slice(),
+            lex_string("+".to_string()).unwrap().as_slice(),
             &[Token {
                 ty: TokenType::ValInc,
                 line: 1,
@@ -91,7 +94,7 @@ mod tests {
     #[test]
     fn lex_string_char_whitespace() {
         matches!(
-            lex_string("  >\n ".to_string()).as_slice(),
+            lex_string("  >\n ".to_string()).unwrap().as_slice(),
             &[Token {
                 ty: TokenType::PointInc,
                 line: 1,
@@ -103,7 +106,7 @@ mod tests {
     #[test]
     fn lex_string_chars_whitespace() {
         matches!(
-            lex_string("> ++ <\n-  ".to_string()).as_slice(),
+            lex_string("> ++ <\n-  ".to_string()).unwrap().as_slice(),
             &[
                 Token {
                     ty: TokenType::PointInc,
@@ -137,7 +140,7 @@ mod tests {
     #[test]
     fn lex_string_char_words() {
         matches!(
-            lex_string("Observe the following:\n ,+++.".to_string()).as_slice(),
+            lex_string("Observe the following:\n ,+++.".to_string()).unwrap().as_slice(),
             &[
                 Token {
                     ty: TokenType::Input,

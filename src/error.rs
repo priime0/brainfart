@@ -6,6 +6,8 @@ use crate::token::Token;
 pub type BrainfartResult<T> = Result<T, BrainfartError>;
 
 #[derive(Debug)]
+/// Possible errors that can be encountered during lexing or runtime. Some members store the token
+/// where the error occurred for more precise reporting.
 pub enum BrainfartError {
     UnmatchedOpenBracket,
     UnmatchedCloseBracket(Token),
