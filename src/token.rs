@@ -1,6 +1,6 @@
 /// A TokenType is a valid "command" in bf that either changes the state of the program or performs
 /// an input/output side-effect.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TokenType {
     /// A Token that represents incrementing the pointer position
     PointInc,
@@ -23,7 +23,7 @@ pub enum TokenType {
 }
 
 /// A Token stores a TokenType and where it was encountered in the source file
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Token {
     pub ty: TokenType,
     pub line: u32,
