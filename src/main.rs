@@ -6,6 +6,7 @@ mod error;
 mod lexer;
 mod progstate;
 mod token;
+mod expr;
 
 use crate::error::BrainfartResult;
 use crate::progstate::ProgState;
@@ -40,9 +41,6 @@ fn run_file(filename: String) -> BrainfartResult<()> {
             }
             Ok(())
         }
-        Err(e) => {
-            eprintln!("lex error");
-            Err(e)
-        }
+        Err(e) => Err(e)
     }
 }
