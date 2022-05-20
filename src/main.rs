@@ -3,12 +3,16 @@ use std::fs;
 use std::process::exit;
 
 mod error;
+mod expr;
 mod lexer;
+mod parser;
 mod progstate;
 mod token;
 mod expr;
 
 use crate::error::BrainfartResult;
+use crate::expr::Expr;
+use crate::parser::parse_tokens;
 use crate::progstate::ProgState;
 use crate::token::Token;
 
@@ -32,14 +36,11 @@ fn run_file(filename: String) -> BrainfartResult<()> {
     let tokens_result: BrainfartResult<Vec<Token>> = lexer::lex_string(contents);
     match tokens_result {
         Ok(tokens) => {
-            let mut progstate: ProgState = ProgState::from_tokens(tokens);
-            while !progstate.finished() {
-                let result: BrainfartResult<()> = progstate.run();
-                if let Err(e) = result {
-                    return Err(e);
-                }
+            let exprs_result: BrainfartResult<Vec<Expr>> = parse_tokens(tokens);
+            match exprs_result {
+                Ok(exprs) => ProgState::default().run(&exprs),
+                Err(e) => Err(e),
             }
-            Ok(())
         }
         Err(e) => Err(e)
     }

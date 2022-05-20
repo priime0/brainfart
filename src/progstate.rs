@@ -1,63 +1,77 @@
-use crate::error::BrainfartError;
-use crate::error::BrainfartResult;
-use crate::token::Token;
-use crate::token::TokenType;
+use crate::error::{BrainfartError, BrainfartResult};
+use crate::expr::{Expr, ExprType, LoopBlock};
 
 use std::io;
 
-/// A ProgState represents the state of the program, with a list of the commands to go through, a
-/// table of the current data stored by the program, the locations of the current command and
-/// current data pointer, as well as a stack to keep track of loops.
+/// A ProgState represents the state/context of the program, with a list of the commands to go
+/// through, a table of the current data stored by the program, the locations of the current
+/// command and current data pointer, as well as a stack to keep track of loops.
 #[derive(Debug)]
 pub struct ProgState {
-    commands: Vec<Token>,
     data: Vec<u32>,
-    command_index: usize,
     data_index: usize,
-    loop_stack: Vec<usize>,
 }
 
 impl ProgState {
-    /// Given a vector of tokens, create a default ProgState with no data, default indices, and an
-    /// empty loop stack.
-    pub fn from_tokens(tokens: Vec<Token>) -> ProgState {
-        let mut data_vec: Vec<u32> = vec![0];
-        data_vec.resize(data_vec.capacity(), 0);
-        ProgState {
-            commands: tokens,
-            data: data_vec,
-            command_index: 0,
-            data_index: 0,
-            loop_stack: vec![],
+    /// Generate the default ProgState, with an empty cell array and the data pointer pointing to
+    /// the first cell.
+    pub fn default() -> Self {
+        let mut data: Vec<u32> = vec![0];
+        let data_index = 0;
+        data.resize(data.capacity(), 0);
+        ProgState { data, data_index }
+    }
+
+    /// Run the provided vector of Exprs with the current ProgState.
+    pub fn run(&mut self, exprs: &[Expr]) -> BrainfartResult<()> {
+        for expr in exprs {
+            let result = match &expr.ty {
+                ExprType::Set(val) => self.run_set(*val),
+                ExprType::Add(val) => self.run_add(*val),
+                ExprType::Sub(val) => self.run_sub(expr, *val),
+                ExprType::MoveRight(val) => self.run_move_right(*val),
+                ExprType::MoveLeft(val) => self.run_move_left(expr, *val),
+                ExprType::Output(val) => self.run_output(*val),
+                ExprType::Input(val) => self.run_input(expr, *val),
+                ExprType::LoopBlock(lb) => self.run_loop_block(&**lb),
+            };
+
+            if let Err(e) = result {
+                return Err(e);
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Set the current pointer's location of this ProgState to the given value.
+    fn run_set(&mut self, val: u32) -> BrainfartResult<()> {
+        self.data[self.data_index] = val;
+        Ok(())
+    }
+
+    /// Add the given value to the current pointer's location of this ProgState.
+    fn run_add(&mut self, val: u32) -> BrainfartResult<()> {
+        self.data[self.data_index] += val;
+        Ok(())
+    }
+
+    /// Subtract the given value from the current pointer's location of this ProgState.
+    fn run_sub(&mut self, expr: &Expr, val: u32) -> BrainfartResult<()> {
+        let curr_val = self.data[self.data_index];
+        if curr_val < val {
+            let err_token = expr.tokens[curr_val as usize];
+            Err(BrainfartError::ValZeroDec(err_token))
+        } else {
+            self.data[self.data_index] -= val;
+            Ok(())
         }
     }
 
-    /// Has the ProgState finished running?
-    pub fn finished(&self) -> bool {
-        self.command_index >= self.commands.len()
-    }
+    /// Move the data pointer's location to the right the given number of times.
+    fn run_move_right(&mut self, val: u32) -> BrainfartResult<()> {
+        self.data_index += val as usize;
 
-    /// Run a single command, assuming that the ProgState is not finished
-    pub fn run(&mut self) -> BrainfartResult<()> {
-        let curr_command: &Token = &self.commands[self.command_index];
-        match curr_command.ty {
-            TokenType::PointInc => self.run_point_inc(),
-            TokenType::PointDec => self.run_point_dec(),
-            TokenType::ValInc => self.run_val_inc(),
-            TokenType::ValDec => self.run_val_dec(),
-            TokenType::Output => self.run_output(),
-            TokenType::Input => self.run_input(),
-            TokenType::IfZero => self.run_if_zero(),
-            TokenType::IfNonZero => self.run_if_non_zero(),
-        }
-    }
-
-    /// Run the pointer increment command on this ProgState
-    fn run_point_inc(&mut self) -> BrainfartResult<()> {
-        self.data_index += 1;
-        self.command_index += 1;
-
-        // Allocate more capacity to the data vector if needed
         if self.data_index >= self.data.capacity() {
             let add_space: usize = self.data_index - self.data.len() + 1;
             self.data.reserve(add_space);
@@ -67,140 +81,66 @@ impl ProgState {
         Ok(())
     }
 
-    /// Run the pointer decrement command on this ProgState
-    fn run_point_dec(&mut self) -> BrainfartResult<()> {
-        if self.data_index == 0 {
-            let token: Token = self.commands[self.command_index];
-            return Err(BrainfartError::PointZeroDec(token));
+    /// Move the data pointer's location to the left the given number of times.
+    fn run_move_left(&mut self, expr: &Expr, val: u32) -> BrainfartResult<()> {
+        let dec_val = val as usize;
+        if self.data_index < dec_val {
+            let err_token = expr.tokens[self.data_index as usize];
+            Err(BrainfartError::PointZeroDec(err_token))
+        } else {
+            self.data_index -= dec_val;
+            Ok(())
         }
-
-        self.data_index -= 1;
-        self.command_index += 1;
-
-        Ok(())
     }
 
-    /// Run the data increment command on this ProgState
-    fn run_val_inc(&mut self) -> BrainfartResult<()> {
-        self.data[self.data_index] += 1;
-        self.command_index += 1;
-
-        Ok(())
-    }
-
-    /// Run the data decrement command on this ProgState
-    fn run_val_dec(&mut self) -> BrainfartResult<()> {
-        if self.data[self.data_index] == 0 {
-            let token: Token = self.commands[self.command_index];
-            return Err(BrainfartError::ValZeroDec(token));
-        }
-
-        self.data[self.data_index] -= 1;
-        self.command_index += 1;
-
-        Ok(())
-    }
-
-    /// Run the data output command on this ProgState
-    fn run_output(&mut self) -> BrainfartResult<()> {
-        let val: u32 = self.data[self.data_index];
-        match char::from_u32(val) {
-            Some(c) => print!("{}", c),
-            None => print!(" "),
-        }
-
-        self.command_index += 1;
-
-        Ok(())
-    }
-
-    /// Run the data input command on this ProgState
-    fn run_input(&mut self) -> BrainfartResult<()> {
-        let mut input: String = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read input");
-
-        let val: char = match input.trim().parse::<char>() {
-            Ok(i) => i,
-            Err(_) => {
-                let token: Token = self.commands[self.command_index];
-                return Err(BrainfartError::Io(token));
+    /// Output the value at the current pointer's location the given number of times.
+    fn run_output(&mut self, val: u32) -> BrainfartResult<()> {
+        let char_val = self.data[self.data_index];
+        match char::from_u32(char_val) {
+            Some(c) => {
+                for _ in 0..val {
+                    print!("{}", c);
+                }
+            }
+            None => {
+                print!(" ");
             }
         };
-
-        self.data[self.data_index] = val as u32;
-        self.command_index += 1;
-
         Ok(())
     }
 
-    /// Run the if zero command on this ProgState
-    fn run_if_zero(&mut self) -> BrainfartResult<()> {
-        let val: u32 = self.data[self.data_index];
-        if val == 0 {
-            let mut curr: &TokenType = &self.commands[self.command_index].ty;
-            while curr != &TokenType::IfNonZero {
-                self.command_index += 1;
-                if self.command_index == self.commands.len() {
-                    return Err(BrainfartError::UnmatchedOpenBracket);
+    /// Input a user-entered value into the current pointer's location the given number of times.
+    fn run_input(&mut self, expr: &Expr, val: u32) -> BrainfartResult<()> {
+        for _ in 0..val {
+            let mut input_string = String::new();
+            let read_result = io::stdin().read_line(&mut input_string);
+            match read_result {
+                Ok(_) => {
+                    let input = input_string.chars().next().unwrap();
+                    let cell_val = input as u32;
+                    self.data[self.data_index] = cell_val;
                 }
-                curr = &self.commands[self.command_index].ty;
+                Err(_) => {
+                    let token = expr.tokens.get(0).unwrap();
+                    return Err(BrainfartError::Io(*token));
+                }
             }
-            self.command_index += 1;
-        } else {
-            self.loop_stack.push(self.command_index);
-            self.command_index += 1;
         }
-
         Ok(())
     }
 
-    /// Run the if non zero command on this ProgState
-    fn run_if_non_zero(&mut self) -> BrainfartResult<()> {
-        let val: u32 = self.data[self.data_index];
-        if val != 0 {
-            self.command_index = self.loop_stack.pop().unwrap();
-        } else {
-            self.loop_stack.pop();
-            self.command_index += 1;
+    /// Run the expressions contained in the LoopBlock, and keep looping while the current pointer
+    /// location does not equal zero after every iteration.
+    fn run_loop_block(&mut self, lb: &LoopBlock) -> BrainfartResult<()> {
+        loop {
+            if self.data[self.data_index] == 0 {
+                break;
+            }
+            let result = self.run(&lb.exprs);
+            if let Err(e) = result {
+                return Err(e);
+            }
         }
-
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::progstate::ProgState;
-    use crate::token::Token;
-    use crate::token::TokenType;
-
-    #[test]
-    fn progstate_from() {
-        let tokens: Vec<Token> = vec![
-            Token::from(TokenType::PointInc, 1, 1),
-            Token::from(TokenType::ValInc, 1, 2),
-        ];
-        let result: ProgState = ProgState::from_tokens(tokens);
-        matches!(
-            result.commands.as_slice(),
-            &[
-                Token {
-                    ty: TokenType::PointInc,
-                    line: 1,
-                    col: 1
-                },
-                Token {
-                    ty: TokenType::ValInc,
-                    line: 1,
-                    col: 2
-                }
-            ]
-        );
-        matches!(result.data.as_slice(), &[0]);
-        matches!(result.command_index, 0);
-        matches!(result.data_index, 0);
-        matches!(result.loop_stack.as_slice(), &[]);
     }
 }
