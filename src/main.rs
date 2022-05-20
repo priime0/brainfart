@@ -8,7 +8,6 @@ mod lexer;
 mod parser;
 mod progstate;
 mod token;
-mod expr;
 
 use crate::error::BrainfartResult;
 use crate::expr::Expr;
@@ -42,6 +41,6 @@ fn run_file(filename: String) -> BrainfartResult<()> {
                 Err(e) => Err(e),
             }
         }
-        Err(e) => Err(e)
+        Err(e) => Err(e),
     }
 }
