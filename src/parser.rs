@@ -14,20 +14,10 @@ pub fn parse_tokens(tokens: Vec<Token>) -> BrainfartResult<Vec<Expr>> {
             TokenType::PointInc => parse_point_inc(&mut exprs, *token),
             TokenType::PointDec => parse_point_dec(&mut exprs, *token),
             TokenType::ValInc => parse_val_inc(&mut exprs, *token),
-            TokenType::ValDec => {
-                let result = parse_val_dec(&mut exprs, *token);
-                if let Err(e) = result {
-                    return Err(e);
-                }
-            }
+            TokenType::ValDec => parse_val_dec(&mut exprs, *token)?,
             TokenType::Output => parse_output(&mut exprs, *token),
             TokenType::Input => parse_input(&mut exprs, *token),
-            TokenType::IfZero => {
-                let result = parse_loop_block(&mut exprs, &mut tokens_iter);
-                if let Err(e) = result {
-                    return Err(e);
-                }
-            }
+            TokenType::IfZero => parse_loop_block(&mut exprs, &mut tokens_iter)?,
             TokenType::IfNonZero => (),
         }
     }
@@ -185,20 +175,10 @@ fn parse_loop_block(exprs: &mut Vec<Expr>, tokens: &mut Iter<'_, Token>) -> Brai
             TokenType::PointInc => parse_point_inc(&mut lb_exprs, *token),
             TokenType::PointDec => parse_point_dec(&mut lb_exprs, *token),
             TokenType::ValInc => parse_val_inc(&mut lb_exprs, *token),
-            TokenType::ValDec => {
-                let result = parse_val_dec(&mut lb_exprs, *token);
-                if let Err(e) = result {
-                    return Err(e);
-                }
-            }
+            TokenType::ValDec => parse_val_dec(&mut lb_exprs, *token)?,
             TokenType::Output => parse_output(&mut lb_exprs, *token),
             TokenType::Input => parse_input(&mut lb_exprs, *token),
-            TokenType::IfZero => {
-                let result = parse_loop_block(&mut lb_exprs, tokens);
-                if let Err(e) = result {
-                    return Err(e);
-                }
-            }
+            TokenType::IfZero => parse_loop_block(&mut lb_exprs, tokens)?,
             TokenType::IfNonZero => {
                 if lb_exprs.len() == 1 {
                     let expr: &Expr = &lb_exprs[0];

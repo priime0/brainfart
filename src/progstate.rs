@@ -33,12 +33,10 @@ impl ProgState {
                 ExprType::MoveLeft(val) => self.run_move_left(expr, *val),
                 ExprType::Output(val) => self.run_output(*val),
                 ExprType::Input(val) => self.run_input(expr, *val),
-                ExprType::LoopBlock(lb) => self.run_loop_block(&**lb),
+                ExprType::LoopBlock(lb) => self.run_loop_block(lb),
             };
 
-            if let Err(e) = result {
-                return Err(e);
-            }
+            result?
         }
 
         Ok(())
@@ -85,7 +83,7 @@ impl ProgState {
     fn run_move_left(&mut self, expr: &Expr, val: u32) -> BrainfartResult<()> {
         let dec_val = val as usize;
         if self.data_index < dec_val {
-            let err_token = expr.tokens[self.data_index as usize];
+            let err_token = expr.tokens[self.data_index];
             Err(BrainfartError::PointZeroDec(err_token))
         } else {
             self.data_index -= dec_val;
@@ -137,9 +135,7 @@ impl ProgState {
                 break;
             }
             let result = self.run(&lb.exprs);
-            if let Err(e) = result {
-                return Err(e);
-            }
+            result?
         }
         Ok(())
     }

@@ -13,9 +13,7 @@ pub fn lex_string(string: String) -> BrainfartResult<Vec<Token>> {
         let opt_token_type: Option<TokenType> = lex_char(char);
         if let Some(token_type) = opt_token_type {
             let token_result = add_token(&mut tokens, token_type, &mut brace_balance, line, col);
-            if let Err(e) = token_result {
-                return Err(e);
-            }
+            token_result?;
             col += 1;
         } else if char == '\n' || char == '\r' {
             line += 1;
